@@ -1,0 +1,60 @@
+# Диференціальна діагностика ішемічної хвороби серця (ІХС)
+# Стаття EMP-PAVLOV; еталонна реалізація — legacy/med_experiment.py
+# Усі значення нижче відтворюють legacy-результати (табл. 5, 7).
+
+task: empirical
+name: ihd
+data: data.csv
+
+# Вхідні концепти C1..C12 (порядок = порядок у моделі).
+# rule: 'a' — чим більше, тим краще (b=1); 'b' — чим менше, тим краще (b=0); 'c' — середина (b=0.5)
+concepts:
+  - {id: age,               name: "Вік хворого",                         unit: "років",     rule: b}
+  - {id: dp_peak,           name: "Подвійний добуток (ПД)",              unit: "у.о.",      rule: a}
+  - {id: tolerance,         name: "Толерантність до навантаження",       unit: "кгм/хв",    rule: a}
+  - {id: dp_gain_per_kg,    name: "Приріст ПД на 1 кг ваги",             unit: "у.о.",      rule: b}
+  - {id: dp_gain_per_load,  name: "Приріст ПД на 1 кгм навантаження",    unit: "у.о.",      rule: b}
+  - {id: atp,               name: "АТФ",                                 unit: "ммоль/л",   rule: b}
+  - {id: adp,               name: "АДФ",                                 unit: "ммоль/л",   rule: b}
+  - {id: amp,               name: "АМФ",                                 unit: "ммоль/л",   rule: a}
+  - {id: phosph_coef,       name: "Коефіцієнт фосфорилювання",           unit: "у.о.",      rule: a}
+  - {id: vo2max,            name: "Макс. споживання кисню на 1 кг",      unit: "мл/хв·кг",  rule: a}
+  - {id: dp_gain_submax,    name: "Приріст ПД на субмакс. навантаження", unit: "у.о.",      rule: a}
+  - {id: lactate_pyruvate,  name: "Лактат / піруват",                    unit: "у.о.",      rule: b}
+
+# Вихідний концепт C13 (клас 1..m у стовпці CSV)
+output:
+  column: diagnosis
+  classes: ["d1 НЦД легка", "d2 НЦД середня", "d3 НЦД тяжка",
+            "d4 Стенокардія I", "d5 Стенокардія II", "d6 Стенокардія III"]
+
+model:
+  scale: unit               # [0,1] з перфектністю
+  perfection_c: 0.389
+  significance: 0.7         # |S_ij| > 0.7
+  weight_threshold: 0.09    # відсікання слабких ваг (без перенормування)
+  no_incoming: [age]        # на вік ніщо не впливає
+  no_outgoing_output: true  # діагноз ні на що не впливає
+  iterations: 30            # фіксована кількість кроків НКК
+  exact: true               # побітово як legacy (false = швидше)
+
+tuning:
+  seed: 42
+  train_fraction: 1.0       # 1.0 = legacy (train = test = усі 65). Напр. 0.77 ≈ 50 навчальних
+  initial_thresholds: [0.20, 0.35, 0.50, 0.65, 0.80]
+  tune_thresholds: true
+  weight_delta: 0.3         # інтервал ваги: w ± 0.3
+  weight_abs_bounds: [0.02, 0.98]
+  threshold_bounds: [0.05, 0.95]
+  fitness: hybrid           # hybrid = legacy; ssd = чистий МНК
+  monotone_history: true    # графік збіжності як неспадний мінімум (legacy)
+  ga:
+    num_generations: 400
+    num_parents_mating: 15
+    sol_per_pop: 50
+    parent_selection_type: sss
+    keep_parents: 5
+    crossover_type: single_point
+    mutation_type: random
+    mutation_percent_genes: 15
+    random_seed: 42

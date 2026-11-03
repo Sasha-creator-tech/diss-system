@@ -1,0 +1,57 @@
+
+=== Training data (from Article Tables 3 & 4) ===
+ No   C1   C2   C3   C4   C5   C6   C7   C8   C9  C10
+  1 -0.8 -0.8  0.8 -0.8 -0.8 -0.8 -0.8 -0.8 -0.8 -0.8
+  2 -0.6 -0.6  0.6 -0.6 -0.6 -0.6 -0.6 -0.6 -0.6 -0.6
+  3 -0.3 -0.3  0.3 -0.3 -0.3 -0.3 -0.3 -0.3 -0.3 -0.3
+  4  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+  5  0.3  0.3 -0.3  0.3  0.3  0.3  0.3  0.3  0.3  0.3
+  6  0.6  0.6 -0.6  0.6  0.6  0.6  0.6  0.6  0.6  0.6
+  7  0.8  0.8 -0.8  0.8  0.8  0.8  0.8  0.8  0.8  0.8
+  8  1.0  1.0 -1.0  1.0  1.0  1.0  1.0  1.0  1.0  1.0
+/usr/local/lib/python3.13/site-packages/pygad/utils/validation.py:517: UserWarning: keep_elitism (=1) takes precedence over keep_parents (=2). Set keep_elitism=0 to retain parents instead.
+  warnings.warn(f'keep_elitism (={self.keep_elitism}) takes precedence over keep_parents (={self.keep_parents}). Set keep_elitism=0 to retain parents instead.')
+Запуск Генетичного Алгоритму...
+
+[INFO] Графік динаміки збережено.
+
+=== Arc weights before and after tuning ===
+ Link  Before       Interval   After
+ w1,6  0.3333   [0.13, 0.53]  0.5179
+ w1,7  0.5556   [0.36, 0.76]  0.7365
+ w2,6  0.1111   [0.02, 0.31]  0.2474
+ w2,7  0.3333   [0.13, 0.53]  0.3034
+ w3,6 -1.0000  [-0.98, -0.8] -0.9778
+ w3,7 -0.7500 [-0.95, -0.55] -0.7210
+ w4,8 -0.5000   [-0.7, -0.3] -0.3262
+ w4,9  0.1111   [0.02, 0.31]  0.2649
+ w5,1  0.1111   [0.02, 0.31]  0.2833
+ w5,2  0.3333   [0.13, 0.53]  0.4516
+ w5,3 -0.1250 [-0.32, -0.02] -0.3001
+ w5,8 -0.1250 [-0.32, -0.02] -0.0508
+ w6,9  1.0000    [0.8, 0.98]  0.9621
+ w7,9  0.5556   [0.36, 0.76]  0.5104
+ w8,4  0.1111   [0.02, 0.31]  0.1048
+ w8,5  0.3333   [0.13, 0.53]  0.4698
+w9,10  1.0000    [0.8, 0.98]  0.8068
+w10,8  0.5556   [0.36, 0.76]  0.7588
+
+=== Expert assessments and simulation results (Focus on C8 - Profit) ===
+
+=== Expert assessments and simulation results (SSE for all outputs) ===
+ No  SSE Before  SSE After  Improvement
+  1      0.3808     0.1858       0.1950
+  2      0.4094     0.2146       0.1948
+  3      1.2023     1.0078       0.1945
+  4      0.0000     0.0000       0.0000
+  5      1.2023     1.0078       0.1945
+  6      0.4094     0.2146       0.1948
+  7      0.3808     0.1858       0.1950
+  8      0.7522     0.5570       0.1952
+
+=== Summary Metrics (Across all outputs C6-C10) ===
+MSE Before Tuning: 0.11843
+MAD Before Tuning: 0.25993
+------------------------------
+MSE After Tuning:  0.08433
+MAD After Tuning:  0.21985
