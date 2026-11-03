@@ -31,10 +31,10 @@ OUT_CLASSES, OUT_NUMERIC = "classes", "numeric"
 STEPS = [("Проєкт", "шкала, тип виходу"), ("Дані", "таблиця"), ("Модель", "карта і ваги"),
          ("Налаштування", "ГА"), ("Використання", "прогноз, що-якщо"), ("Звіт", "експорт")]
 S_PROJECT, S_DATA, S_MODEL, S_TUNE, S_USE, S_REPORT = range(6)
-PRESETS = {"Швидко · 100 поколінь": 100, "Як у статті · 400": 400, "Ретельно · 1000": 1000}
+PRESETS = {"Швидко · 100 поколінь": 100, "Оптимально · 400 поколінь": 400, "Ретельно · 1000 поколінь": 1000}
 
 # Параметри за замовчуванням = legacy/med_experiment.py
-DEFAULT_GA = dict(num_generations=400, num_parents_mating=15, sol_per_pop=50, parent_selection_type="sss",
+DEFAULT_GA = dict(num_generations=100, num_parents_mating=15, sol_per_pop=50, parent_selection_type="sss",
                   keep_parents=5, crossover_type="single_point", mutation_type="random",
                   mutation_percent_genes=15, random_seed=42)
 
@@ -260,13 +260,12 @@ def step_project(s):
                              format_func=lambda x: {sc.UNIT: "[0, 1] — від мінімуму 0 до максимуму 1",
                                                     sc.SYM: "[−1, 1] — від −1 через 0 (середнє) до +1"}[x])
         s["scale"] = new_scale
-        st.caption("Шкала визначає, як вводяться і показуються рівні концептів, вихід і межі класів. Розрахунок "
-                   "перфектності ведеться у [0, 1] (формула 8), перетворення лінійне — результати не змінюються.")
+        st.caption("Шкала визначає, як вводяться і показуються рівні концептів, вихід і межі класів.")
     with st.container(border=True):
         st.markdown("**Що є результатом моделі**")
         new_out = st.radio("Тип виходу", [OUT_CLASSES, OUT_NUMERIC], horizontal=True, key=f"emp_out_{s['ver']}",
                            index=[OUT_CLASSES, OUT_NUMERIC].index(s["output_type"]), label_visibility="collapsed",
-                           format_func=lambda x: {OUT_CLASSES: "Класи (діагнози, рівні тяжкості)",
+                           format_func=lambda x: {OUT_CLASSES: "Класи",
                                                   OUT_NUMERIC: "Числове значення"}[x])
         if new_out != s["output_type"]:
             s["output_type"] = new_out
@@ -367,7 +366,7 @@ def step_data(s):
 
 
 def step_model(s):
-    ui.header("Крок 3. Модель", "Ваги зв’язків обчислено з даних за подібністю показників (формули 10–15).",
+    ui.header("Крок 3. Модель", "Ваги зв’язків обчислено з даних за подібністю показників.",
               s["name"], s["scale"])
     errs = _validate(s)
     if errs:
@@ -479,7 +478,7 @@ def step_tune(s):
 
     r = s["result"]
     if r is None:
-        ui.note("Натисніть «Запустити». Для 65 записів режим «Як у статті» займає приблизно 10–20 секунд.", "muted")
+        ui.note("Натисніть «Запустити». Швидкість виконання залежить від розміру навчальних даних та складності моделі. Для початку рекомендується починати зі 100 поколінь.", "muted")
     else:
         _tune_results(s, r)
 

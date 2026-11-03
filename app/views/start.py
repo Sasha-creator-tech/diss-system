@@ -48,7 +48,7 @@ def _confirm_delete(pid: str, name: str):
         st.rerun()
 
 
-COLS = [3.2, 1.3, 0.9, 1.0, 1.3, 1.2, 1.5, 0.45, 0.45]
+COLS = [3.0, 1.3, 1.3, 1.0, 1.3, 1.2, 1.5, 0.45, 0.45]
 
 
 def _projects_table():
@@ -87,13 +87,13 @@ def _projects_table():
 
 
 def render():
-    ui.header("З чого почнемо?", "Оберіть, яка у вас вихідна інформація — система підбере потрібні інструменти.")
+    ui.header("З чого почнемо?", "Оберіть потрібний інструмент відповідно до вихідної інформації.")
 
     c1, c2, c3 = st.columns(3, gap="medium")
     with c1, st.container(border=True):
         st.markdown('<div class="ds-tpl"><span class="t">Модель за даними</span><span class="d">Є таблиця '
-                    'спостережень (CSV): «показники → результат». Результат — класи або число. Система сама '
-                    'знайде зв’язки, побудує карту і налаштує її генетичним алгоритмом.</span>'
+                    'спостережень (CSV): «показники → результат». Результат — класи або число. Система знаходить '
+                    'зв’язки, побудує НКК і налаштує її генетичним алгоритмом.</span>'
                     '<div><span class="ds-chip">Приклад: діагностика ІХС</span></div></div>', unsafe_allow_html=True)
         if st.button("Почати з таблиці", key="new_emp", type="primary", width="stretch"):
             empirical.new_project()
@@ -109,7 +109,7 @@ def render():
             expert.load_example()
     with c3, st.container(border=True):
         st.markdown('<div class="ds-tpl"><span class="t">Відкрити файл проєкту</span><span class="d">Файл .json, '
-                    'збережений на кроці «Звіт» або отриманий від колеги. Проєкт додасться до списку нижче.</span>'
+                    'збережений на кроці «Звіт». Проєкт додасться до списку нижче.</span>'
                     '</div>', unsafe_allow_html=True)
         f = st.file_uploader("Файл проєкту", type=["json"], key="open_file", label_visibility="collapsed")
         if f is not None and st.session_state.get("_imported") != (f.name, f.size):

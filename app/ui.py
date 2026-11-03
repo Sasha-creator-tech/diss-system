@@ -72,7 +72,7 @@ def setup_page():
 
 def brand():
     st.sidebar.markdown(f'<div class="ds-brand">{LOGO}DissSystem</div>'
-                        f'<div style="font-size:13px;color:{MUTED};margin-bottom:14px">Моделювання на нечітких когнітивних картах</div>',
+                        f'<div style="font-size:13px;color:{MUTED};margin-bottom:14px">Система підтримки прийняття рішень</div>',
                         unsafe_allow_html=True)
 
 
