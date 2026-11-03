@@ -13,6 +13,8 @@ import pandas as pd
 import streamlit as st
 
 from app import projects, ui
+from app.views import convergence as conv_view
+from core import convergence as cv
 from core import diagnosis, gds, model_io, weights_expert
 from core import scale as sc
 from core.ga import GAConfig
@@ -411,6 +413,34 @@ def step_tune(s):
         goto(S_USE)
 
 
+def _conv_task(s, m) -> conv_view.Task:
+    """Дані для вкладки «Збіжність»: сценарії навчання (якщо є), інакше еталонні сценарії і прогноз."""
+    n, ids = len(m.concept_ids), m.concept_ids
+    X, Y, cases, src = None, None, [], ""
+    tr = s["train"]
+    if tr is not None and all(c in tr.columns for c in ids):
+        tr = tr[ids].astype(float).dropna()
+        if len(tr) and np.any(tr.to_numpy() != 0):
+            X = tr[[ids[i] for i in m.cause_idx]].to_numpy()
+            Y = tr[[ids[i] for i in m.effect_idx]].to_numpy()
+            cases = [f"Сценарій навчання {i + 1}" for i in range(len(X))]
+            src = f"{len(X)} сценаріїв навчання (причини); якість — відхилення наслідків від заданих"
+    if X is None:
+        rows = [(f"Сценарій {k}", v) for k, v in (s["scenarios"] or {}).items()]
+        if s["forecast_causes"]:
+            rows.append(("Прогноз", s["forecast_causes"]))
+        if not rows:
+            rng = np.random.default_rng(0)
+            rows = [(f"Вектор {i + 1}", rng.uniform(-1, 1, len(m.cause_idx))) for i in range(50)]
+        X = np.array([np.asarray(v, float) for _, v in rows])
+        cases = [c for c, _ in rows]
+        src = f"{len(X)} сценаріїв причин (сценаріїв навчання немає, тож якість не оцінюється)"
+    A0 = np.zeros((len(X), n))
+    A0[:, m.cause_idx] = X
+    return conv_view.Task("gds_conv", np.asarray(m.W, float), A0, list(ids), cases, "gds", cv.SYM,
+                          list(m.effect_idx), list(m.cause_idx), m.diagnosis.get("max_iter", 50), src, Y=Y)
+
+
 def step_use(s):
     m = current_model(s)
     s["model"] = m
@@ -419,7 +449,7 @@ def step_use(s):
     lo, hi = sc.lo(s["scale"]), sc.hi(s["scale"])
     ui.header("Крок 5. Використання", f"Ваги: {m.meta.get('weights', 'експертні')}. Шкала значень "
               f"{sc.LABELS[s['scale']]}.", m.name, s["scale"])
-    tab_f, tab_d = st.tabs(["Прогноз (прямий вивід)", "Пошук причин (зворотний вивід)"])
+    tab_f, tab_d, tab_c = st.tabs(["Прогноз (прямий вивід)", "Пошук причин (зворотний вивід)", "Збіжність"])
     step = 0.05
 
     with tab_f:
@@ -503,6 +533,9 @@ def step_use(s):
                 worst = [f"{ids[m.cause_idx[k]]} ({names[m.cause_idx[k]]})" for k in order[:2] if r.causes[k] < -0.2]
                 if worst:
                     ui.note("Найнижчі причини: " + ", ".join(worst) + ".", "info")
+
+    with tab_c:
+        conv_view.render(_conv_task(s, m))
 
     c1, c2 = st.columns([1, 5])
     if c1.button("← Назад", key="gds_back4"):

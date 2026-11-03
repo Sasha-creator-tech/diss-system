@@ -12,6 +12,8 @@ import pandas as pd
 import streamlit as st
 
 from app import projects, ui
+from app.views import convergence as conv_view
+from core import convergence as cv
 from core import importance as imp_mod
 from core import model_io, reports
 from core import scale as sc
@@ -563,12 +565,40 @@ def _result_text(m, v):
     return m.class_labels[c - 1]
 
 
+def _conv_task(s, m) -> conv_view.Task:
+    """Дані для вкладки «Збіжність»: усі рядки навчальних даних (або випадкові вектори, якщо даних немає)."""
+    n = len(m.concept_ids)
+    labels = [f"C{i + 1}" for i in range(n)]
+    r = s["result"]
+    if r is None:                                   # файл «лише модель»: даних немає
+        rng = np.random.default_rng(0)
+        A0 = np.hstack([rng.random((100, n - 1)), np.zeros((100, 1))])
+        return conv_view.Task("emp_conv", np.asarray(m.W, float), A0, labels, [f"Вектор {i + 1}" for i in range(100)],
+                              "empirical", cv.UNIT, [n - 1], list(range(n - 1)), m.iterations,
+                              "100 випадкових векторів U(0, 1) (даних у проєкті немає)")
+    which = "after"
+    if r.W_initial is not None:
+        which = st.radio("Ваги для перевірки", ["after", "before"], horizontal=True, key="emp_conv_w",
+                         format_func=lambda x: "налаштовані ГА" if x == "after" else "початкові (з даних)")
+    W = r.tuning.W if which == "after" else r.W_initial
+    thr = None if r.config.is_numeric else (r.tuning.thresholds if which == "after" else r.config.initial_thresholds)
+    A0 = r.A_norm.copy()
+    A0[:, -1] = 0.0
+    short = _short(m.class_labels) if not m.is_numeric else []
+    cases = [f"№ {i + 1}" + (f" · {m.class_labels[c - 1]}" if short else "") for i, c in enumerate(r.real_class)]
+    return conv_view.Task("emp_conv", np.asarray(W, float), A0, labels, cases, "empirical", cv.UNIT, [n - 1],
+                          list(range(n - 1)), r.config.iterations,
+                          f"{len(A0)} рядків даних (нормовані показники, вихід = 0)",
+                          real_output=r.A_norm[:, -1], real_class=None if r.config.is_numeric else r.real_class,
+                          thresholds=thr)
+
+
 def step_use(s):
     m: model_io.EmpiricalModel = s["model"]
     S_ = s["scale"]
     ui.header("Крок 5. Використання", "Введіть показники — результат оновлюється одразу.", m.name, S_)
     short = _short(m.class_labels) if not m.is_numeric else []
-    t1, t2, t3 = st.tabs(["Один випадок", "Пакетно (CSV)", "Вплив показників"])
+    t1, t2, t3, t4 = st.tabs(["Один випадок", "Пакетно (CSV)", "Вплив показників", "Збіжність"])
 
     with t1:
         left, right = st.columns([1.1, 1], gap="large")
@@ -653,7 +683,10 @@ def step_use(s):
             st.altair_chart(ui.hbar_chart([f"C{res.inputs[k] + 1} · {m.concept_names[res.inputs[k]]}" for k in order],
                                           _conv(s, res.values[order]), domain=[sc.lo(S_), sc.hi(S_)]), width="stretch")
 
-    ui.note("Дослідницька модель. Не є медичним висновком і не замінює рішення фахівця.", "muted")
+    with t4:
+        conv_view.render(_conv_task(s, m))
+
+    ui.note("Дослідницька модель. Не є справжнім висновком і не замінює рішення фахівця.", "muted")
     c1, c2 = st.columns([1, 5])
     if not s["model_only"] and c1.button("← Назад", key="emp_back4"):
         goto(S_TUNE)

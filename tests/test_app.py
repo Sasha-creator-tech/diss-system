@@ -102,3 +102,20 @@ def test_expert_tuning_short_and_reopen(_store):
     at2 = _app()
     at2.button(key=f"open_{next(iter(_store))}").click().run()
     assert at2.session_state["gds"]["tuning"].mse_after == pytest.approx(r.mse_after)
+
+
+def test_expert_convergence_tab():
+    """Вкладка «Збіжність»: 5 правил × 8 функцій; базовий варіант відтворює MSE експертних ваг (стаття 2)."""
+    at = _app()
+    at.button(key="ex_gds").click().run()
+    at.button(key="gds_next0").click().run()
+    at.button(key="gds_next1").click().run()
+    at.button(key="gds_skip2").click().run()
+    assert not at.exception
+    df = next(d.value for d in at.dataframe if "Умова збіжності" in d.value.columns)
+    assert len(df) == 40 and df.iloc[0]["Правило"].startswith("●")
+    assert df.iloc[0]["Динаміка"].startswith("✓ точка 8/8")
+    at.checkbox(key="gds_conv_clamp").check().run()
+    at.multiselect(key="gds_conv_acts").set_value(["sigmoid"]).run()
+    df = next(d.value for d in at.dataframe if "Умова збіжності" in d.value.columns)
+    assert not at.exception and len(df) == 1 + 5          # базовий + 5 правил × сигмоїда
